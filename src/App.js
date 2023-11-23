@@ -1,17 +1,20 @@
-// App.js
 import React from 'react';
-import AjaxComponent1 from './components/AjaxComponent1';
-import Button from './components/Button';
-import LoadingIndicator from './components/LoadingIndicator';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+import Page404 from './pages/Page404';
+import Layout from './components/Layout';
+import routes from './routes/router';
 
 function App() {
-  return (
-    <div className="App">
-      <AjaxComponent1 />
-      <Button />
-    </div>
+  const router = createBrowserRouter([
+    {
+      element: <Layout />,
+      errorElement: <Page404 />,
+      children: routes
+    }
+  ])
 
-  );
+  return <RouterProvider router={router} />
 }
 
 export default App;

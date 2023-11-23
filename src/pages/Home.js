@@ -1,90 +1,65 @@
-import React, { useState, useEffect, useRef } from 'react';    
+import React, { useState, useEffect, useRef } from 'react';
+
+import { slide as Menu } from 'react-burger-menu';
+import { Link } from 'react-router-dom';
+
+
 import 'bootstrap/dist/css/bootstrap.min.css';  
 import Button from 'react-bootstrap/Button';              
-import LoadingIndicator from './LoadingIndicator'
+import LoadingIndicator from '../components/LoadingIndicator'
+import BurgerMenu from '../components/burgerMenu';
+import Footer from '../components/footer';
 
-const ITEMS_PER_PAGE = 10;  
+
+  
 
 const AjaxComponent = () => {
   const [data, setData] = useState(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  
-  const cacheRef = useRef(Object.create(null));
+  const [displayData, setDisplayData] = useState([]);
+  const [page, setPage] = useState(1)
+  const tilesPerPage = 2;
+
 
   useEffect(() => {
-
     const fetchData = async () => {
-      setLoading(true)
-      if (cacheRef.current[page]) {
-        console.log('Data retrieved from cache:', cacheRef[page]);
-        setData(cacheRef.current[page]);
-        setLoading(false);
-      } else {
         try {
           console.log('Making API request...');
           const response = await fetch(`https://arthurfrost.qflo.co.za/php/getTimeline.php`);
-          const newData =  await response.json();
-
-          const updatedData = (!data || page === 1) ? newData.Timeline : [...data, ...newData.Timeline];
-  
-          setData(updatedData);
-          cacheRef.current[page] = updatedData;
-          console.log('Data cached:', updatedData);
-          setLoading(false);
+          if (!response.ok) {
+            throw new Error("API request failed");
+          }
+          const result =  await response.json();
+          console.log(result)  
+          setData(result.Timeline);
         } catch (error) {
-            console.error('Error:', error);
-            console.log("API request failed")
-          } finally {
-          setLoading(false);
+          console.error('Error fetching data:', error);
         }
       }
-    };
-  
-    fetchData();
-    
-  }, [page, data]);
-      
-  useEffect(() => {
-    if(data) {
-      cacheRef.current[page] = data;
+
+    fetchData();  
+  }, []);
+
+ useEffect(() => {
+  if(data){
+  const startIndex = (page - 1) * tilesPerPage;
+  const endIndex = startIndex + tilesPerPage;
+  const dataToDisplay = data.slice(startIndex, endIndex)
+  setDisplayData(dataToDisplay)
+}
+ }, [data, page]);
+
+    const handleNextPage = () => {
+      setPage(prevPage => prevPage + 1)
     }
-  },  [data, page])
 
-  const handleNext = () => {
-    setPage(prevPage => {
-      const nextPage = prevPage + 1;
-      if (cacheRef.current[nextPage]) {
-        setData(cacheRef.current[nextPage])
-      }
-      return nextPage
-    })
-  };
-
-  const handlePrev = () => {
-    setPage(prevPage => {
-      const nextPage = prevPage > 1 ? prevPage - 1 : prevPage;
-      if (cacheRef.current[nextPage]) {
-        setData(cacheRef.current[nextPage]);
-      } else {
-        setData(null);
-      }
-      return nextPage;
-    });
-  }
-
-  if (loading) {
-    return <LoadingIndicator />
-  } 
-
-  const start = (page - 1) * ITEMS_PER_PAGE;
-  const end = start + ITEMS_PER_PAGE;
-
-
+    const handlePrevPage = () => {
+      setPage(prevPage => (prevPage > 1 ? prevPage - 1: 1))
+    } 
+  
   return (
     <div className="container">
-      {data && data.length > 0 ? (
-        data.slice(start, end).map((item, index) => (
+      { displayData.length > 0 ? (
+        displayData.map((item, index) => (
           <div key={index} className="card mb-3">
             {item.Image && <img src={'https://arthurfrost.qflo.co.za/' + item.Image} alt={item.Title} className="img-thumbnail card-img-top img-fluid rounded"></img>}            
             <div className="card-body">
@@ -116,16 +91,17 @@ const AjaxComponent = () => {
         ))
       ) : null }
 
-      <footer className="text-center mt-5">
-        Created by Johnny Koch on 14 November 2023.
+      <footer class="text-center mt-5 bg-light">
+        <Footer />
       </footer>
       {!data && <LoadingIndicator />}
       <div style={{display: "flex", justifyContent: "center"}}>
-        <Button onClick={handlePrev}>Previous</Button>
-        <Button onClick={handleNext}>Next</Button>
+        <Button onClick={handlePrevPage} >Previous</Button>
+        <Button onClick={handleNextPage} >Next</Button>
       </div>
     </div>
   );
 };
+
 
 export default AjaxComponent;

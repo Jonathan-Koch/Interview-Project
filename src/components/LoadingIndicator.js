@@ -1,4 +1,4 @@
-import AjaxComponent from "./AjaxComponent1"
+import AjaxComponent from "../pages/Home"
 
 const LoadingIndicator = () => {
     return (
@@ -8,3 +8,6 @@ const LoadingIndicator = () => {
 
 
 export default LoadingIndicator
+
+
+
